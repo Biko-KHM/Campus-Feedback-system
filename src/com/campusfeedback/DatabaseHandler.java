@@ -20,15 +20,43 @@ public class DatabaseHandler {
     }
 
     private void initializeConnection() {
+        // --- START OF CHANGES ---
         try {
-            String url = "jdbc:mysql://localhost:3306/campus_feedback";
+            // Connect to MySQL server without specifying a database
+            String serverUrl = "jdbc:mysql://localhost:3306/";
             String username = "root";
             String password = "";
-            connection = DriverManager.getConnection(url, username, password);
+            Connection serverConnection = DriverManager.getConnection(serverUrl, username, password);
+
+            // Check if campus_feedback database exists
+            boolean databaseExists = false;
+            try (ResultSet rs = serverConnection.getMetaData().getCatalogs()) {
+                while (rs.next()) {
+                    if ("campus_feedback".equalsIgnoreCase(rs.getString(1))) {
+                        databaseExists = true;
+                        break;
+                    }
+                }
+            }
+
+            // Create database if it does not exist
+            if (!databaseExists) {
+                try (Statement stmt = serverConnection.createStatement()) {
+                    stmt.executeUpdate("CREATE DATABASE campus_feedback");
+                }
+            }
+
+            // Close server connection
+            serverConnection.close();
+
+            // Connect to the campus_feedback database
+            String dbUrl = "jdbc:mysql://localhost:3306/campus_feedback";
+            connection = DriverManager.getConnection(dbUrl, username, password);
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Failed to connect to database: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+        // --- END OF CHANGES ---
     }
 
     private void createTablesIfNotExist() {
